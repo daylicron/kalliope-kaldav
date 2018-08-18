@@ -1,7 +1,7 @@
 import logging
 
-import datetime
 import time
+from datetime import datetime, date, time
 import locale
 import pytz
 
@@ -146,12 +146,15 @@ END:VCALENDAR
             logger.debug("Using calendar %s" % calendar)
 
             if start is None:
-                start = datetime.datetime.today()
+                # fix me: workaround for getting time in utc
+                today = datetime.today()
+                start = today.replace(hour=today.hour - 2)
             else:
                 # TODO: transform in datetime
                 pass
             if end is None:
-                end = start.replace(hour=23, minute=59, second=59)
+                # using end of today as default end time
+                end = start.replace(day=start.day + 1, hour=00, minute=00, second=00, microsecond=00)
             else:
                 # TODO: transform in datetime
                 pass
@@ -159,16 +162,37 @@ END:VCALENDAR
             results = calendar.date_search(start, end)
 
             events = []
+            count = 0
             for event in results:
-                e = Kvevent(event.data)
-                logger.debug("Found event: %s" % e)
-                #logger.debug(e.get_property('DTSTART'))
-                #logger.debug(e.get_property('DTEND'))
-                events.append({
-                    'start': e.get_property('DTSTART'),
-                    'end': e.get_property('DTEND'),
-                    'name': e.get_property('SUMMARY')
-                })
+                # fix me: workaround for taking care of max_results
+                if count <= self.configuration['max_results']:
+                    e = Kvevent(event.data)
+                    logger.debug("Found event: %s" % e)
+                    # read start and end time
+                    start = e.get_property('DTSTART')
+                    end = e.get_property('DTEND')
+                    # fix me: workaround for transforming hour back to cest
+                    s_hour_utc = start[9:10]
+                    e_hour_utc = end[9:10]
+                    s_hour_cest = s_hour_utc + 2
+                    e_hour_cest = e_hour_utc + 2
+                    #logger.debug(e.get_property('DTSTART'))
+                    #logger.debug(e.get_property('DTEND'))
+                    # split start and end time into year, month, day, hour, minute
+                    events.append({
+                        's_year': start[0:3],
+                        's_month': start[4:5],
+                        's_day': start[6:7],
+                        's_hour': s_hour_cest,
+                        's_minute': start[11:12],
+                        'e_year': end[0:3],
+                        'e_month': end[4:5],
+                        'e_day': end[6:7],
+                        'e_hour': e_hour_cest,
+                        'e_minute': end[11:12],
+                        'name': e.get_property('SUMMARY')
+                    })
+                    count = count + 1
 
             logger.debug(events)
             return events
