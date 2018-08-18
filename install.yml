@@ -1,3 +1,4 @@
+---
 - name: Kalliope caldav euron install
   hosts: localhost
   gather_facts: no
