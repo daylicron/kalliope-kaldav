@@ -39,8 +39,9 @@ class Kaldav (NeuronModule):
             self.response = {
                 'action': self.configuration['action']
             }
+
             if self.configuration['action'] == "search":
-                events = self.search_event(self.configuration['start'], self.configuration['end'])
+                events = self.search_event(self.configuration['start_date'], self.configuration['end_date'])
                 if events is not False:
                     self.response['events'] = events
             elif self.configuration['action'] == "create":
@@ -149,7 +150,9 @@ END:VCALENDAR
             else:
                 # TODO: transform in datetime
                 pass
-            if end is not None:
+            if end is None:
+                end = start.replace(hour=23, minute=59, second=59)
+            else:
                 # TODO: transform in datetime
                 pass
             logger.debug("Looking for events between %s and %s" % (start, end))
