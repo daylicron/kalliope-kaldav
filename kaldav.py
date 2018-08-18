@@ -1,7 +1,7 @@
 import logging
 
 import time
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timezone
 import locale
 import pytz
 
@@ -164,33 +164,36 @@ END:VCALENDAR
             events = []
             count = 0
             for event in results:
-                # fix me: workaround for taking care of max_results
+                ## fix me: workaround for taking care of max_results
                 if count <= self.configuration['max_results']:
                     e = Kvevent(event.data)
                     logger.debug("Found event: %s" % e)
-                    # read start and end time
-                    start = e.get_property('DTSTART')
-                    end = e.get_property('DTEND')
-                    # fix me: workaround for transforming hour back to cest
-                    s_hour_utc = start[9:10]
-                    e_hour_utc = end[9:10]
-                    s_hour_cest = s_hour_utc + 2
-                    e_hour_cest = e_hour_utc + 2
+                    ## read start and end time
+                    start_event = e.get_property('DTSTART')
+                    end_event = e.get_property('DTEND')
+                    
                     #logger.debug(e.get_property('DTSTART'))
                     #logger.debug(e.get_property('DTEND'))
-                    # split start and end time into year, month, day, hour, minute
+                    ## split start and end time into year, month, day, hour, minute
+                    s_year = start_event[0:3]
+                    s_month = start_event[4:5]
+                    s_day = start_event[6:7]
+                    # fix me: workaround for transforming hour back to cest
+                    s_hour_utc = start_event[9:10]
+                    s_hour_cest = s_hour_utc + 2
+                    s_minute = start_event[11:12]
+
+                    e_year = end_event[0:3]
+                    e_month = end_event[4:5]
+                    e_day = end_event[6:7]
+                    # fix me: workaround for transforming hour back to cest
+                    e_hour_utc = end_event[9:10]
+                    e_hour_cest = e_hour_utc + 2
+                    e_minute = end_event[11:12]
+
                     events.append({
-                        's_year': start[0:3],
-                        's_month': start[4:5],
-                        's_day': start[6:7],
-                        's_hour': s_hour_cest,
-                        's_minute': start[11:12],
-                        'e_year': end[0:3],
-                        'e_month': end[4:5],
-                        'e_day': end[6:7],
-                        'e_hour': e_hour_cest,
-                        'e_minute': end[11:12],
-                        'name': e.get_property('SUMMARY')
+                        'name': e.get_property('SUMMARY'),
+                        'time': { 's_year': s_year, 's_month': s_month, 's_day': s_day, 's_hour_cest': s_hour_cest, 's_minute': s_minute, 'e_year': e_year, 'e_month': e_month, 'e_day': e_day, 'e_hour_cest': e_hour_cest, 'e_minute': e_minute}
                     })
                     count = count + 1
 
