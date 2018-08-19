@@ -149,12 +149,20 @@ END:VCALENDAR
                 # fix me: workaround for getting time in utc
                 today = datetime.today()
                 start = today.replace(hour=today.hour - 2)
+                # catch time out of 24 hours range
+                if start.hour is -1:
+                    start.replace(hour=23)
+                elif start.hour is -2:
+                    start.replace(hour=22)
             else:
                 # TODO: transform in datetime
                 pass
             if end is None:
                 # using end of today as default end time
                 end = start.replace(day=start.day + 1, hour=00, minute=00, second=00, microsecond=00)
+                # catch time out of 24 hours range
+                if end.hour is 24:
+                    end.replace(hour=00)
             else:
                 # TODO: transform in datetime
                 pass
@@ -169,27 +177,27 @@ END:VCALENDAR
                     e = Kvevent(event.data)
                     logger.debug("Found event: %s" % e)
                     ## read start and end time
-                    start_event = e.get_property('DTSTART')
-                    end_event = e.get_property('DTEND')
+                    start_event = str(e.get_property('DTSTART'))
+                    end_event = str(e.get_property('DTEND'))
                     
                     #logger.debug(e.get_property('DTSTART'))
                     #logger.debug(e.get_property('DTEND'))
                     ## split start and end time into year, month, day, hour, minute
-                    s_year = start_event[0:3]
-                    s_month = start_event[4:5]
-                    s_day = start_event[6:7]
+                    s_year = start_event[2:5]
+                    s_month = start_event[6:7]
+                    s_day = start_event[8:9]
                     # fix me: workaround for transforming hour back to cest
-                    s_hour_utc = start_event[9:10]
-                    s_hour_cest = s_hour_utc + 2
-                    s_minute = start_event[11:12]
+                    s_hour_utc = start_event[11:12]
+                    s_hour_cest = int(s_hour_utc) + 2
+                    s_minute = start_event[13:14]
 
-                    e_year = end_event[0:3]
-                    e_month = end_event[4:5]
-                    e_day = end_event[6:7]
+                    e_year = end_event[2:5]
+                    e_month = end_event[6:7]
+                    e_day = end_event[8:9]
                     # fix me: workaround for transforming hour back to cest
-                    e_hour_utc = end_event[9:10]
-                    e_hour_cest = e_hour_utc + 2
-                    e_minute = end_event[11:12]
+                    e_hour_utc = end_event[11:12]
+                    e_hour_cest = int(e_hour_utc) + 2
+                    e_minute = end_event[13:14]
 
                     events.append({
                         'name': e.get_property('SUMMARY'),
