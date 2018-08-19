@@ -4,6 +4,7 @@ import time
 from datetime import datetime, date, time, timezone
 import locale
 import pytz
+import re
 
 import caldav
 from caldav.elements import dav, cdav
@@ -183,24 +184,27 @@ END:VCALENDAR
                     #logger.debug(e.get_property('DTSTART'))
                     #logger.debug(e.get_property('DTEND'))
                     ## split start and end time into year, month, day, hour, minute
-                    s_year = start_event[2:5]
-                    s_month = start_event[6:7]
-                    s_day = start_event[8:9]
+                    s_year = start_event[2:6]
+                    s_month = start_event[6:8]
+                    s_day = start_event[8:10]
                     # fix me: workaround for transforming hour back to cest
-                    s_hour_utc = start_event[11:12]
+                    s_hour_utc = start_event[11:13]
                     s_hour_cest = int(s_hour_utc) + 2
-                    s_minute = start_event[13:14]
+                    s_minute = start_event[13:15]
 
-                    e_year = end_event[2:5]
-                    e_month = end_event[6:7]
-                    e_day = end_event[8:9]
+                    e_year = end_event[2:6]
+                    e_month = end_event[6:8]
+                    e_day = end_event[8:10]
                     # fix me: workaround for transforming hour back to cest
-                    e_hour_utc = end_event[11:12]
+                    e_hour_utc = end_event[11:13]
                     e_hour_cest = int(e_hour_utc) + 2
-                    e_minute = end_event[13:14]
+                    e_minute = end_event[13:15]
+
+                    ## remove [''] from SUMMARY
+                    name = re.sub("\[|'|\]", " ", str(e.get_property('SUMMARY')))
 
                     events.append({
-                        'name': e.get_property('SUMMARY'),
+                        'name': name,
                         'time': { 's_year': s_year, 's_month': s_month, 's_day': s_day, 's_hour_cest': s_hour_cest, 's_minute': s_minute, 'e_year': e_year, 'e_month': e_month, 'e_day': e_day, 'e_hour_cest': e_hour_cest, 'e_minute': e_minute}
                     })
                     count = count + 1
